@@ -2,55 +2,60 @@
 <html lang="en-us">
 <head>
   <meta charset="utf-8" />
-  <title>Unity WebGL Player | 0529v1</title>
+  <title>Unity WebGL AR</title>
   <link rel="shortcut icon" href="TemplateData/favicon.ico" />
   <style>
     html, body {
-      margin: 0; padding: 0; overflow: hidden; height: 100%; background: transparent;
+      margin: 0; padding: 0; overflow: hidden; height: 100%;
+      background: black;
     }
-    /* 手機相機視訊 - 全螢幕且放最底層 */
-    #camera-video {
+
+    #camera-feed {
       position: fixed;
       top: 0; left: 0;
-      width: 100%; height: 100%;
+      width: 100vw;
+      height: 100vh;
       object-fit: cover;
       z-index: 0;
       background: black;
     }
-    /* Unity WebGL 容器放最上層 */
+
     #unity-container {
-      width: 100%; height: 100%;
-      position: fixed; top: 0; left: 0;
-      background: transparent;
+      position: fixed;
+      top: 0; left: 0;
+      width: 100vw;
+      height: 100vh;
       z-index: 1;
-      pointer-events: none; /* Unity canvas 預設不接受點擊，等你需要互動再改 */
+      pointer-events: none;
     }
+
     canvas {
       background: transparent !important;
+      width: 100vw !important;
+      height: 100vh !important;
       display: block;
-      margin: 0 auto;
-      width: 100% !important;
-      height: 100% !important;
-      touch-action: none;
     }
+
     #unity-loading-bar {
-      width: 100%; height: 4px;
+      position: absolute;
+      bottom: 10px;
+      left: 10px;
+      width: calc(100% - 20px);
+      height: 4px;
       background: #222;
-      position: fixed; bottom: 0; left: 0;
       z-index: 2;
     }
+
     #unity-progress-bar-full {
-      width: 0%; height: 100%;
+      width: 0%;
+      height: 100%;
       background: #4caf50;
       transition: width 0.3s;
     }
   </style>
 </head>
 <body>
-  <!-- 手機相機畫面 -->
-  <video id="camera-video" autoplay playsinline muted></video>
-
-  <!-- Unity WebGL畫布 -->
+  <video id="camera-feed" autoplay playsinline muted></video>
   <div id="unity-container">
     <canvas id="unity-canvas" width=960 height=600 tabindex="-1"></canvas>
     <div id="unity-loading-bar">
@@ -59,55 +64,47 @@
   </div>
 
   <script>
-    // 取得手機相機
-    const video = document.getElementById('camera-video');
+    // 啟用相機背景
+    const video = document.getElementById('camera-feed');
     navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' }, audio: false })
       .then(stream => {
         video.srcObject = stream;
       })
       .catch(err => {
-        alert('無法取得相機權限，請允許使用相機');
-        console.error(err);
+        console.error("無法開啟相機:", err);
+        alert("無法開啟相機：" + err.message);
       });
+  </script>
 
-    // Unity WebGL 初始化設定
-    var container = document.querySelector("#unity-container");
-    var canvas = document.querySelector("#unity-canvas");
-    var loadingBarFull = document.querySelector("#unity-progress-bar-full");
-
-    function unityShowBanner(msg, type) {
-      console.log(type + ": " + msg);
-    }
-
-    var buildUrl = "Build";
-    var loaderUrl = buildUrl + "/ttest.loader.js";
-    var config = {
-      dataUrl: buildUrl + "/ttest.data",
-      frameworkUrl: buildUrl + "/ttest.framework.js",
-      codeUrl: buildUrl + "/ttest.wasm",
+  <script>
+    const buildUrl = "Build";
+    const loaderUrl = buildUrl + "/0529v1.loader.js";
+    const config = {
+      dataUrl: buildUrl + "/0529v1.data",
+      frameworkUrl: buildUrl + "/0529v1.framework.js",
+      codeUrl: buildUrl + "/0529v1.wasm",
       streamingAssetsUrl: "StreamingAssets",
       companyName: "DefaultCompany",
       productName: "0529v1",
       productVersion: "0.1",
-      showBanner: unityShowBanner,
-      backgroundColor: {r:0, g:0, b:0, a:0}, // 透明背景
+      backgroundColor: { r: 0, g: 0, b: 0, a: 0 }
     };
 
-    loadingBarFull.style.width = "0%";
+    const canvas = document.querySelector("#unity-canvas");
+    const loadingBar = document.querySelector("#unity-loading-bar");
+    const progressBarFull = document.querySelector("#unity-progress-bar-full");
 
-    var script = document.createElement("script");
+    const script = document.createElement("script");
     script.src = loaderUrl;
     script.onload = () => {
       createUnityInstance(canvas, config, (progress) => {
-        loadingBarFull.style.width = (100 * progress) + "%";
+        progressBarFull.style.width = (100 * progress) + "%";
       }).then((unityInstance) => {
-        loadingBarFull.style.display = "none";
-        // 你可在這裡保存 unityInstance 以便互動使用
+        loadingBar.style.display = "none";
       }).catch((message) => {
         alert(message);
       });
     };
-
     document.body.appendChild(script);
   </script>
 </body>
